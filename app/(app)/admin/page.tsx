@@ -7,7 +7,6 @@ export default async function AdminPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Only super_admins can access this page
   const { data: profile } = await supabase
     .from('users')
     .select('role, full_name, tenant_id')
@@ -18,27 +17,27 @@ export default async function AdminPage() {
     redirect('/dashboard')
   }
 
-  // Fetch all operators (owners) across all tenants
-  const { data: operators } = await supabase
+  const { data: operatorsRaw } = await supabase
     .from('users')
     .select('id, full_name, role, is_active, created_at, tenant_id, tenants(name)')
     .eq('role', 'owner')
     .order('created_at', { ascending: false })
 
-  // Fetch all tenants with lease/reading counts
+  // Normalize tenants from array (Supabase join) to single object
+  const operators = (operatorsRaw ?? []).map((op: any) => ({
+    ...op,
+    tenants: Array.isArray(op.tenants) ? (op.tenants[0] ?? null) : op.tenants,
+  }))
+
   const { data: tenants } = await supabase
     .from('tenants')
-    .select(`
-      id, name, created_at,
-      leases(id),
-      gauge_readings(id)
-    `)
+    .select(`id, name, created_at, leases(id), gauge_readings(id)`)
     .order('created_at', { ascending: false })
 
   return (
     <AdminClient
       currentUserId={user.id}
-      operators={operators ?? []}
+      operators={operators}
       tenants={tenants ?? []}
     />
   )
