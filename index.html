@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OilGauge Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #161b27;
+  --bg3: #1e2535;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8eaf0;
+  --text2: #8b92a8;
+  --text3: #545c75;
+  --accent: #e8a44a;
+  --accent2: #c4843a;
+  --green: #3fb68a;
+  --green-bg: rgba(63,182,138,0.12);
+  --red: #e85555;
+  --red-bg: rgba(232,85,85,0.12);
+  --amber-bg: rgba(232,164,74,0.12);
+  --blue: #5b9cf6;
+  --blue-bg: rgba(91,156,246,0.12);
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+.serif { font-family: 'DM Serif Display', serif; }
+
+/* Nav */
+.nav { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:var(--bg2); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.nav-logo { font-family:'DM Serif Display',serif; font-size:20px; color:var(--accent); letter-spacing:-0.5px; }
+.nav-logo span { color:var(--text2); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; margin-left:8px; }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.nav-user { font-size:13px; color:var(--text2); }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:var(--radius); font-size:13px; font-weight:500; cursor:pointer; border:none; transition:all .15s; font-family:inherit; }
+.btn-primary { background:var(--accent); color:#1a1000; }
+.btn-primary:hover { background:var(--accent2); }
+.btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border2); }
+.btn-ghost:hover { color:var(--text); border-color:rgba(255,255,255,0.25); }
+.btn-sm { padding:6px 10px; font-size:12px; }
+
+/* Tabs */
+.tabs { display:flex; gap:4px; padding:16px 20px 0; background:var(--bg2); border-bottom:1px solid var(--border); }
+.tab { padding:8px 16px; font-size:13px; font-weight:500; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; }
+.tab.active { color:var(--accent); border-color:var(--accent); }
+.tab:hover:not(.active) { color:var(--text); }
+
+/* Layout */
+.page { display:none; padding:20px; max-width:1100px; margin:0 auto; }
+.page.active { display:block; }
+
+/* Cards */
+.card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px; }
+.card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.card-title { font-size:13px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.8px; }
+
+/* Dashboard grid */
+.lease-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin-top:20px; }
+.lease-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px; cursor:pointer; transition:all .2s; }
+.lease-card:hover { border-color:var(--border2); transform:translateY(-1px); }
+.lease-card.alert { border-color:rgba(232,85,85,0.3); }
+.lease-name { font-family:'DM Serif Display',serif; font-size:22px; color:var(--text); margin-bottom:4px; }
+.lease-level { font-family:'IBM Plex Mono',monospace; font-size:28px; font-weight:500; color:var(--accent); }
+.lease-level span { font-size:14px; color:var(--text2); font-family:'DM Sans',sans-serif; font-weight:400; margin-left:4px; }
+.lease-meta { display:flex; flex-direction:column; gap:4px; margin-top:10px; }
+.lease-meta-row { display:flex; justify-content:space-between; font-size:12px; }
+.lease-meta-row .label { color:var(--text3); }
+.lease-meta-row .val { color:var(--text2); font-family:'IBM Plex Mono',monospace; }
+.lease-meta-row .val.good { color:var(--green); }
+.lease-meta-row .val.warn { color:var(--accent); }
+.tank-bar { height:6px; background:var(--bg3); border-radius:3px; margin-top:14px; overflow:hidden; }
+.tank-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition:width .5s ease; }
+.badge { display:inline-flex; align-items:center; padding:3px 8px; border-radius:20px; font-size:11px; font-weight:600; }
+.badge-green { background:var(--green-bg); color:var(--green); }
+.badge-amber { background:var(--amber-bg); color:var(--accent); }
+.badge-red { background:var(--red-bg); color:var(--red); }
+.badge-blue { background:var(--blue-bg); color:var(--blue); }
+
+/* Stat row */
+.stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px; }
+.stat-box { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
+.stat-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:0.7px; margin-bottom:6px; }
+.stat-value { font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:500; color:var(--text); }
+.stat-value.accent { color:var(--accent); }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:3px; }
+
+/* Table */
+.tbl { width:100%; border-collapse:collapse; font-size:13px; }
+.tbl th { font-size:11px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:0.7px; padding:8px 12px; border-bottom:1px solid var(--border); text-align:left; }
+.tbl td { padding:10px 12px; border-bottom:1px solid var(--border); color:var(--text2); }
+.tbl td.mono { font-family:'IBM Plex Mono',monospace; font-size:12px; }
+.tbl td.primary { color:var(--text); font-weight:500; }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr.adjust td { background:rgba(232,164,74,0.05); }
+.tbl tr:hover td { background:rgba(255,255,255,0.02); }
+.neg { color:var(--red) !important; }
+.pos { color:var(--green) !important; }
+
+/* Gauge form */
+.form-section { margin-bottom:20px; }
+.form-label { display:block; font-size:12px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.7px; margin-bottom:8px; }
+.form-input { width:100%; padding:12px 14px; background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius); font-size:16px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; transition:border-color .15s; }
+.form-input:focus { border-color:var(--accent); }
+.input-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.input-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.reason-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.reason-btn { padding:12px 10px; background:var(--bg3); border:1.5px solid var(--border2); border-radius:var(--radius); font-size:13px; font-weight:500; color:var(--text2); cursor:pointer; text-align:center; transition:all .15s; }
+.reason-btn:hover { border-color:rgba(255,255,255,0.25); color:var(--text); }
+.reason-btn.selected { border-color:var(--accent); background:var(--amber-bg); color:var(--accent); }
+.reason-btn.selected.oil { border-color:var(--blue); background:var(--blue-bg); color:var(--blue); }
+.form-select { -webkit-appearance:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%238b92a8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; }
+
+/* Lease select cards */
+.lease-select-grid { display:grid; gap:10px; margin-top:8px; }
+.lease-select-card { padding:16px; background:var(--bg3); border:1.5px solid var(--border2); border-radius:var(--radius-lg); cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:space-between; }
+.lease-select-card:hover { border-color:rgba(255,255,255,0.25); }
+.lease-select-card.selected { border-color:var(--accent); background:var(--amber-bg); }
+.lease-select-name { font-size:16px; font-weight:600; color:var(--text); }
+.lease-select-meta { font-size:12px; color:var(--text2); margin-top:2px; }
+.lease-select-bbls { font-family:'IBM Plex Mono',monospace; font-size:18px; color:var(--accent); }
+
+/* Previous reading panel */
+.prev-panel { background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius-lg); padding:16px; margin:12px 0 20px; }
+.prev-panel-title { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.7px; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+.prev-reading-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.prev-item label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.6px; display:block; margin-bottom:3px; }
+.prev-item .val { font-family:'IBM Plex Mono',monospace; font-size:14px; color:var(--text); }
+.prev-item .val.big { font-size:20px; color:var(--accent); }
+
+/* Confirm panel */
+.confirm-panel { background:var(--bg3); border:1.5px solid var(--accent); border-radius:var(--radius-lg); padding:18px; margin:16px 0; }
+.confirm-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:14px; }
+.confirm-row .label { color:var(--text2); }
+.confirm-row .val { font-family:'IBM Plex Mono',monospace; color:var(--text); font-weight:500; }
+
+/* Run ticket panel */
+.ticket-panel { background:rgba(91,156,246,0.07); border:1px solid rgba(91,156,246,0.2); border-radius:var(--radius-lg); padding:16px; margin:10px 0; }
+.ticket-title { font-size:12px; font-weight:600; color:var(--blue); margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+
+/* Chart mini */
+.mini-chart { display:flex; align-items:flex-end; gap:3px; height:50px; }
+.mini-bar { flex:1; border-radius:2px 2px 0 0; background:var(--accent); opacity:0.7; min-width:8px; }
+.mini-bar.adj { background:var(--blue); opacity:0.5; }
+
+/* Alert strip */
+.alert-strip { background:var(--red-bg); border:1px solid rgba(232,85,85,0.3); border-radius:var(--radius); padding:10px 14px; font-size:13px; color:var(--red); display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+
+/* Success toast */
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--green); color:#001a10; padding:14px 24px; border-radius:var(--radius); font-weight:600; font-size:14px; transition:transform .3s; z-index:999; white-space:nowrap; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* Divider */
+.divider { height:1px; background:var(--border); margin:16px 0; }
+
+/* Responsive */
+@media(max-width:600px) {
+  .input-row { grid-template-columns:1fr 1fr 1fr; }
+  .reason-grid { grid-template-columns:1fr; }
+  .prev-reading-grid { grid-template-columns:1fr 1fr; }
+  .stat-row { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">OilGauge <span>Pro</span></div>
+  <div class="nav-right">
+    <span class="nav-user" id="nav-user-name">TKL Oil Properties</span>
+    <button class="btn btn-ghost btn-sm" id="role-toggle" onclick="toggleRole()">Switch to Pumper</button>
+  </div>
+</nav>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" onclick="showPage('dashboard')">Dashboard</div>
+  <div class="tab" onclick="showPage('gauge')">Submit Gauge</div>
+  <div class="tab owner-only" onclick="showPage('reports')">Reports</div>
+  <div class="tab owner-only" onclick="showPage('settings')">Settings</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page active" id="page-dashboard">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+    <div>
+      <h1 class="serif" style="font-size:26px;color:var(--text);">Production Overview</h1>
+      <p style="color:var(--text2);font-size:13px;margin-top:2px;">Last updated May 12, 2026 · 5 active leases</p>
+    </div>
+    <button class="btn btn-primary" onclick="showPage('gauge')">+ Submit Gauge</button>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-label">Total BBLs On Hand</div>
+      <div class="stat-value accent">653.89</div>
+      <div class="stat-sub">Across 5 leases</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">7-Day Avg Production</div>
+      <div class="stat-value">5.87</div>
+      <div class="stat-sub">BBL / day combined</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Readings This Month</div>
+      <div class="stat-value">23</div>
+      <div class="stat-sub">May 2026</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Leases Needing Gauge</div>
+      <div class="stat-value" style="color:var(--accent)">2</div>
+      <div class="stat-sub">&gt; 7 days since last</div>
+    </div>
+  </div>
+
+  <div class="alert-strip" id="overdue-alert">
+    ⚠ Kellye and FreedomGaines have not been gauged in over 7 days.
+  </div>
+
+  <div class="lease-grid">
+
+    <div class="lease-card" onclick="showLease('schuster')">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+        <div class="lease-name">Schuster</div>
+        <span class="badge badge-green">Active</span>
+      </div>
+      <div class="lease-level">122.75 <span>BBLs</span></div>
+      <div class="tank-bar"><div class="tank-fill" style="width:61%"></div></div>
+      <div class="lease-meta" style="margin-top:12px;">
+        <div class="lease-meta-row"><span class="label">Tank level</span><span class="val">6 ft 1 in ½</span></div>
+        <div class="lease-meta-row"><span class="label">Last gauged</span><span class="val">1 day ago · Mike T.</span></div>
+        <div class="lease-meta-row"><span class="label">BBL/day avg</span><span class="val good">1.17</span></div>
+        <div class="lease-meta-row"><span class="label">Tank capacity</span><span class="val">202 BBLs (61%)</span></div>
+      </div>
+    </div>
+
+    <div class="lease-card" onclick="showLease('gainesb')">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+        <div class="lease-name">Gaines B</div>
+        <span class="badge badge-amber">Adj. Recent</span>
+      </div>
+      <div class="lease-level">23.59 <span>BBLs</span></div>
+      <div class="tank-bar"><div class="tank-fill" style="width:12%"></div></div>
+      <div class="lease-meta" style="margin-top:12px;">
+        <div class="lease-meta-row"><span class="label">Tank level</span><span class="val">1 ft 2 in ⅛</span></div>
+        <div class="lease-meta-row"><span class="label">Last gauged</span><span class="val">2 days ago · Mike T.</span></div>
+        <div class="lease-meta-row"><span class="label">BBL/day avg</span><span class="val good">2.81</span></div>
+        <div class="lease-meta-row"><span class="label">Tank capacity</span><span class="val">202 BBLs (12%)</span></div>
+      </div>
+    </div>
+
+    <div class="lease-card" onclick="showLease('normajean')">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+        <div class="lease-name">Norma Jean</div>
+        <span class="badge badge-green">Active</span>
+      </div>
+      <div class="lease-level">162.83 <span>BBLs</span></div>
+      <div class="tank-bar"><div class="tank-fill" style="width:80%"></div></div>
+      <div class="lease-meta" style="margin-top:12px;">
+        <div class="lease-meta-row"><span class="label">Tank level</span><span class="val">8 ft 1 in ½</span></div>
+        <div class="lease-meta-row"><span class="label">Last gauged</span><span class="val">3 days ago · Mike T.</span></div>
+        <div class="lease-meta-row"><span class="label">BBL/day avg</span><span class="val good">0.65</span></div>
+        <div class="lease-meta-row"><span class="label">Tank capacity</span><span class="val">202 BBLs (80%)</span></div>
+      </div>
+    </div>
+
+    <div class="lease-card alert" onclick="showPage('gauge')">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+        <div class="lease-name">Kellye</div>
+        <span class="badge badge-red">Overdue</span>
+      </div>
+      <div class="lease-level">58.50 <span>BBLs</span></div>
+      <div class="tank-bar"><div class="tank-fill" style="width:29%"></div></div>
+      <div class="lease-meta" style="margin-top:12px;">
+        <div class="lease-meta-row"><span class="label">Tank level</span><span class="val">4 ft 0 in</span></div>
+        <div class="lease-meta-row"><span class="label">Last gauged</span><span class="val warn">9 days ago · Mike T.</span></div>
+        <div class="lease-meta-row"><span class="label">BBL/day avg</span><span class="val">0.30</span></div>
+        <div class="lease-meta-row"><span class="label">Tank capacity</span><span class="val">210 BBLs (29%)</span></div>
+      </div>
+    </div>
+
+    <div class="lease-card alert" onclick="showPage('gauge')">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+        <div class="lease-name">FreedomGaines</div>
+        <span class="badge badge-red">Overdue</span>
+      </div>
+      <div class="lease-level">136.94 <span>BBLs</span></div>
+      <div class="tank-bar"><div class="tank-fill" style="width:68%"></div></div>
+      <div class="lease-meta" style="margin-top:12px;">
+        <div class="lease-meta-row"><span class="label">Tank level</span><span class="val">8 ft 3 in ¾</span></div>
+        <div class="lease-meta-row"><span class="label">Last gauged</span><span class="val warn">11 days ago · Mike T.</span></div>
+        <div class="lease-meta-row"><span class="label">BBL/day avg</span><span class="val">0.82</span></div>
+        <div class="lease-meta-row"><span class="label">Tank capacity</span><span class="val">202 BBLs (68%)</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LEASE DETAIL PAGE -->
+<div class="page" id="page-lease">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <button class="btn btn-ghost btn-sm" onclick="showPage('dashboard')">← Back</button>
+    <div>
+      <h1 class="serif" id="lease-detail-name" style="font-size:28px;"></h1>
+      <p style="color:var(--text2);font-size:13px;">Tank: 202 BBL · 1.67 BBL/in</p>
+    </div>
+    <button class="btn btn-primary" style="margin-left:auto;" onclick="showPage('gauge')">+ Gauge</button>
+  </div>
+
+  <div class="stat-row" id="lease-stats"></div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-header">
+      <span class="card-title">Recent Readings</span>
+      <span style="font-size:12px;color:var(--text3);">Last 5 shown</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="tbl" id="lease-table"></table>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Production Trend</span></div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">BBL/day · last 10 readings</div>
+      <div class="mini-chart" id="lease-chart"></div>
+      <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:var(--text3);">
+        <span>■ <span style="color:var(--accent)">Normal</span></span>
+        <span>■ <span style="color:var(--blue)">Adjustment</span></span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Adjustment Events</span></div>
+      <div id="lease-adjustments" style="font-size:13px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- GAUGE FORM PAGE -->
+<div class="page" id="page-gauge">
+  <div style="max-width:520px;margin:0 auto;">
+    <h1 class="serif" style="font-size:24px;margin-bottom:4px;">Submit Gauge Reading</h1>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:20px;">Logged as: <strong id="gauge-pumper-name" style="color:var(--text);">Mike Thurston</strong></p>
+
+    <!-- Step 1: Lease Select -->
+    <div class="form-section" id="step-lease">
+      <label class="form-label">Select Lease</label>
+
+      <!-- Full list (shown when no lease selected) -->
+      <div class="lease-select-grid" id="lease-list">
+        <div class="lease-select-card" onclick="selectLease('schuster',this)">
+          <div>
+            <div class="lease-select-name">Schuster</div>
+            <div class="lease-select-meta">Last gauged 1 day ago · 1.17 BBL/day</div>
+          </div>
+          <div class="lease-select-bbls">122.75</div>
+        </div>
+        <div class="lease-select-card" onclick="selectLease('gainesb',this)">
+          <div>
+            <div class="lease-select-name">Gaines B</div>
+            <div class="lease-select-meta">Last gauged 2 days ago · 2.81 BBL/day</div>
+          </div>
+          <div class="lease-select-bbls">23.59</div>
+        </div>
+        <div class="lease-select-card" onclick="selectLease('normajean',this)">
+          <div>
+            <div class="lease-select-name">Norma Jean</div>
+            <div class="lease-select-meta">Last gauged 3 days ago · 0.65 BBL/day</div>
+          </div>
+          <div class="lease-select-bbls">162.83</div>
+        </div>
+        <div class="lease-select-card" onclick="selectLease('kellye',this)">
+          <div>
+            <div class="lease-select-name">Kellye</div>
+            <div class="lease-select-meta" style="color:var(--red)">⚠ 9 days since last gauge</div>
+          </div>
+          <div class="lease-select-bbls">58.50</div>
+        </div>
+      </div>
+
+      <!-- Collapsed: single selected card (shown after selection) -->
+      <div id="lease-selected-card" style="display:none;">
+        <div class="lease-select-card selected" style="cursor:default;">
+          <div>
+            <div class="lease-select-name" id="selected-lease-name"></div>
+            <div class="lease-select-meta" id="selected-lease-meta"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="lease-select-bbls" id="selected-lease-bbls"></div>
+            <button class="btn btn-ghost btn-sm" onclick="changeLease()" style="white-space:nowrap;flex-shrink:0;">Change</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Previous Reading (shown after lease selected) -->
+    <div class="prev-panel" id="prev-panel" style="display:none;">
+      <div class="prev-panel-title">📋 Last Reading — <span id="prev-lease-name"></span></div>
+      <div class="prev-reading-grid">
+        <div class="prev-item"><label>Date</label><div class="val" id="prev-date"></div></div>
+        <div class="prev-item"><label>Pumper</label><div class="val" id="prev-pumper"></div></div>
+        <div class="prev-item"><label>Type</label><div class="val" id="prev-type"></div></div>
+        <div class="prev-item"><label>Level</label><div class="val big" id="prev-level"></div></div>
+        <div class="prev-item"><label>BBLs on hand</label><div class="val big" id="prev-bbls"></div></div>
+        <div class="prev-item"><label>BBL/day avg</label><div class="val" id="prev-ppd"></div></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Gauge Entry (shown after lease selected) -->
+    <div id="step-entry" style="display:none;">
+
+      <div class="form-section">
+        <label class="form-label">Reading Date & Time</label>
+        <input type="datetime-local" class="form-input" id="reading-date">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Change this for backdated run tickets</div>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Tank Level</label>
+        <div class="input-row">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Feet</div>
+            <input type="number" class="form-input" id="inp-feet" min="0" max="30" placeholder="0" oninput="updateCalc()">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Inches</div>
+            <input type="number" class="form-input" id="inp-inches" min="0" max="11" placeholder="0" oninput="updateCalc()">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Fraction</div>
+            <select class="form-input form-select" id="inp-fraction" onchange="updateCalc()">
+              <option value="0">0</option>
+              <option value="0.125">⅛</option>
+              <option value="0.25">¼</option>
+              <option value="0.375">⅜</option>
+              <option value="0.5">½</option>
+              <option value="0.625">⅝</option>
+              <option value="0.75">¾</option>
+              <option value="0.875">⅞</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Reason for Reading</label>
+        <div class="reason-grid">
+          <div class="reason-btn selected" onclick="selectReason('normal',this)" data-type="normal">Normal Gauge</div>
+          <div class="reason-btn" onclick="selectReason('oil_sold',this)" data-type="oil_sold">Oil Sold</div>
+          <div class="reason-btn" onclick="selectReason('transferred',this)" data-type="transferred">Transferred</div>
+          <div class="reason-btn" onclick="selectReason('bottom_pulled',this)" data-type="bottom_pulled">Bottom Pulled</div>
+          <div class="reason-btn" onclick="selectReason('correction',this)" data-type="correction">Correction</div>
+          <div class="reason-btn" onclick="selectReason('other',this)" data-type="other">Other</div>
+        </div>
+      </div>
+
+      <!-- Run Ticket Panel (Oil Sold) -->
+      <div class="ticket-panel" id="ticket-panel" style="display:none;">
+        <div class="ticket-title">🗒 Run Ticket Information</div>
+        <div class="form-section" style="margin-bottom:12px;">
+          <label class="form-label">Ticket Number</label>
+          <input type="text" class="form-input" id="ticket-num" placeholder="e.g. 00421">
+        </div>
+        <div class="input-row-2" style="margin-bottom:12px;">
+          <div>
+            <label class="form-label">Purchaser</label>
+            <input type="text" class="form-input" id="ticket-purchaser" placeholder="Plains Marketing">
+          </div>
+          <div>
+            <label class="form-label">Pickup Date</label>
+            <input type="date" class="form-input" id="ticket-date">
+          </div>
+        </div>
+        <div class="form-section" style="margin-bottom:12px;">
+          <label class="form-label">BBLs Sold (from ticket)</label>
+          <input type="number" class="form-input" id="ticket-bbls" placeholder="0.00" step="0.01" oninput="updateCalc()">
+        </div>
+        <div class="divider"></div>
+        <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:10px;">Pre-Sale Gauge (from ticket)</div>
+        <div class="input-row" style="margin-bottom:12px;">
+          <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Feet</div><input type="number" class="form-input" id="pre-feet" min="0" max="30" placeholder="0"></div>
+          <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Inches</div><input type="number" class="form-input" id="pre-inches" min="0" max="11" placeholder="0"></div>
+          <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Fraction</div>
+            <select class="form-input form-select" id="pre-fraction">
+              <option value="0">0</option><option value="0.125">⅛</option><option value="0.25">¼</option>
+              <option value="0.375">⅜</option><option value="0.5">½</option><option value="0.625">⅝</option>
+              <option value="0.75">¾</option><option value="0.875">⅞</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:10px;">Post-Sale Gauge (from ticket)</div>
+        <div class="input-row">
+          <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Feet</div><input type="number" class="form-input" id="post-feet" min="0" max="30" placeholder="0"></div>
+          <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Inches</div><input type="number" class="form-input" id="post-inches" min="0" max="11" placeholder="0"></div>
+          <div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Fraction</div>
+            <select class="form-input form-select" id="post-fraction">
+              <option value="0">0</option><option value="0.125">⅛</option><option value="0.25">¼</option>
+              <option value="0.375">⅜</option><option value="0.5">½</option><option value="0.625">⅝</option>
+              <option value="0.75">¾</option><option value="0.875">⅞</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Comments</label>
+        <textarea class="form-input" id="inp-comments" rows="2" placeholder="Optional notes..."></textarea>
+      </div>
+
+      <!-- Live Calculation Preview -->
+      <div class="confirm-panel" id="calc-panel" style="display:none;">
+        <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+          🛢 Calculated Results
+        </div>
+        <div class="confirm-row"><span class="label">Current level</span><span class="val" id="calc-level">—</span></div>
+        <div class="confirm-row"><span class="label">BBLs on hand</span><span class="val" id="calc-bbls">—</span></div>
+        <div class="confirm-row" id="calc-delta-row"><span class="label">Δ since last reading</span><span class="val" id="calc-delta">—</span></div>
+        <div class="confirm-row" id="calc-days-row"><span class="label">Days since last</span><span class="val" id="calc-days">—</span></div>
+        <div class="confirm-row" id="calc-ppd-row"><span class="label">BBLs per day</span><span class="val" id="calc-ppd">—</span></div>
+      </div>
+
+      <div id="negative-warn" style="display:none;" class="alert-strip" style="margin:0 0 16px;">
+        ⚠ Reading is lower than last normal gauge. If this is not an oil sale or adjustment, verify the measurement before submitting.
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;padding:16px;font-size:16px;border-radius:var(--radius-lg);margin-top:8px;" onclick="submitGauge()">
+        Submit Gauge Reading
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- REPORTS PAGE -->
+<div class="page" id="page-reports">
+  <h1 class="serif" style="font-size:26px;margin-bottom:4px;">Reports & Export</h1>
+  <p style="color:var(--text2);font-size:13px;margin-bottom:20px;">Generate monthly production reports and export data</p>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Monthly Production Report</span></div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">PDF report per lease showing opening/closing BBLs, total production, sales, and BBL/day average.</p>
+      <div class="input-row-2" style="margin-bottom:12px;">
+        <div>
+          <label class="form-label" style="font-size:11px;">Month</label>
+          <select class="form-input form-select" style="padding:10px 12px;font-size:13px;">
+            <option>May 2026</option><option>April 2026</option><option>March 2026</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size:11px;">Lease</label>
+          <select class="form-input form-select" style="padding:10px 12px;font-size:13px;">
+            <option>All Leases</option><option>Schuster</option><option>Gaines B</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="showToast('PDF report generated — check your downloads')">Generate PDF</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">CSV Export</span></div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">Export raw gauge data to CSV for Excel, state reporting, or royalty calculations.</p>
+      <div class="input-row-2" style="margin-bottom:12px;">
+        <div>
+          <label class="form-label" style="font-size:11px;">Date From</label>
+          <input type="date" class="form-input" style="padding:10px 12px;font-size:13px;">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:11px;">Date To</label>
+          <input type="date" class="form-input" style="padding:10px 12px;font-size:13px;">
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="form-label" style="font-size:11px;">Filter by</label>
+        <select class="form-input form-select" style="padding:10px 12px;font-size:13px;">
+          <option>All Leases · All Pumpers</option><option>Schuster</option><option>Mike Thurston</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;border-color:var(--accent);color:var(--accent);" onclick="showToast('CSV exported — check your downloads')">Export CSV</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Import Historical Data</span></div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">Import gauge readings from your existing Google Sheets CSV export. The importer maps columns automatically and flags any rows that need review.</p>
+
+      <!-- Drop zone -->
+      <div id="import-dropzone" onclick="document.getElementById('csv-file-input').click()"
+        style="border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+        ondragleave="this.style.borderColor='var(--border2)'"
+        ondrop="handleDrop(event)">
+        <div style="font-size:28px;margin-bottom:8px;">📂</div>
+        <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;">Drop your CSV here or click to browse</div>
+        <div style="font-size:12px;color:var(--text3);">Exported from Google Sheets · GaugeLog Responses tab</div>
+        <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleFileSelect(this)">
+      </div>
+
+      <!-- Column mapping (shown after file loaded) -->
+      <div id="import-mapping" style="display:none;">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;">Column Mapping — verify before import</div>
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:12px;margin-bottom:12px;font-size:12px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="mapping-grid"></div>
+        </div>
+        <div id="import-preview" style="margin-bottom:12px;"></div>
+        <div id="import-warnings" style="margin-bottom:12px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button class="btn btn-ghost" onclick="resetImport()">Cancel</button>
+          <button class="btn btn-primary" onclick="confirmImport()">Import <span id="import-count">0</span> Rows</button>
+        </div>
+      </div>
+
+      <!-- Success state -->
+      <div id="import-success" style="display:none;text-align:center;padding:16px;">
+        <div style="font-size:32px;margin-bottom:8px;">✅</div>
+        <div style="font-size:15px;font-weight:600;color:var(--green);margin-bottom:4px;" id="import-success-msg"></div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:14px;" id="import-success-sub"></div>
+        <button class="btn btn-ghost btn-sm" onclick="resetImport()">Import Another File</button>
+      </div>
+
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;">Expected CSV columns</div>
+        <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;line-height:1.8;">
+          Timestamp · What Well? · Feet · Inch · BBL Total · Comments
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;font-size:11px;" onclick="downloadTemplate()">Download template CSV</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">May 2026 Summary</span></div>
+      <div style="font-size:13px;color:var(--text2);">
+        <div class="confirm-row"><span>Total production</span><span class="val">47.3 BBLs</span></div>
+        <div class="confirm-row"><span>Oil sold</span><span class="val">155.2 BBLs</span></div>
+        <div class="confirm-row"><span>Run tickets</span><span class="val">3 events</span></div>
+        <div class="confirm-row"><span>Gauges submitted</span><span class="val">23</span></div>
+        <div class="confirm-row"><span>Avg BBL/day all leases</span><span class="val">5.87</span></div>
+        <div class="divider"></div>
+        <div class="confirm-row"><span style="color:var(--text3);">Busiest lease</span><span class="val">Gaines B</span></div>
+        <div class="confirm-row"><span style="color:var(--text3);">Most gauges</span><span class="val">Mike T. (23)</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="page" id="page-settings">
+  <h1 class="serif" style="font-size:26px;margin-bottom:4px;">Settings</h1>
+  <p style="color:var(--text2);font-size:13px;margin-bottom:20px;">Manage your operator account, leases, and pumpers</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:800px;">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Pumpers</span><button class="btn btn-primary btn-sm" onclick="showToast('Add pumper flow would open here')">+ Add</button></div>
+      <div style="font-size:13px;">
+        <div class="confirm-row"><span style="color:var(--text);">Mike Thurston</span><span class="badge badge-green">Active</span></div>
+        <div style="font-size:11px;color:var(--text3);padding:2px 0 8px;">Assigned: Schuster, Gaines B, Norma Jean, Kellye, FreedomGaines</div>
+        <div class="divider"></div>
+        <div class="confirm-row"><span style="color:var(--text);">Lisa Garrett</span><span class="badge" style="background:var(--bg3);color:var(--text3);">Inactive</span></div>
+        <div style="font-size:11px;color:var(--text3);padding:2px 0 0;">No lease assignments</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Leases & Tanks</span><button class="btn btn-primary btn-sm" onclick="showToast('Add lease flow would open here')">+ Add</button></div>
+      <div style="font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <div><div style="color:var(--text);font-weight:500;">Schuster</div><div style="font-size:11px;color:var(--text3);">202 BBL · 1.67 BBL/in</div></div>
+          <span class="badge badge-green">Active</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <div><div style="color:var(--text);font-weight:500;">Gaines B</div><div style="font-size:11px;color:var(--text3);">202 BBL · 1.67 BBL/in</div></div>
+          <span class="badge badge-green">Active</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+          <div><div style="color:var(--text);font-weight:500;">Norma Jean</div><div style="font-size:11px;color:var(--text3);">202 BBL · 1.67 BBL/in</div></div>
+          <span class="badge badge-green">Active</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;">
+          <div><div style="color:var(--text);font-weight:500;">Kellye</div><div style="font-size:11px;color:var(--text3);">210 BBL · 1.75 BBL/in</div></div>
+          <span class="badge badge-green">Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- State ---
+const LEASES = {
+  schuster: {
+    name:'Schuster', bbls:122.75, bblsPerIn:1.67, capacity:202,
+    ft:6, inches:1, frac:0.5, daysAgo:1, ppd:1.17, pumper:'Mike T.',
+    readings:[
+      {date:'5/11/26',pumper:'Mike T.',ft:6,in:1,frac:'½',bbls:122.75,delta:7.72,days:8.18,ppd:0.94,type:'normal'},
+      {date:'5/3/26', pumper:'Mike T.',ft:5,in:8,frac:'⅞',bbls:115.02,delta:6.26,days:6.92,ppd:0.90,type:'normal'},
+      {date:'4/26/26',pumper:'Mike T.',ft:5,in:5,frac:'⅛',bbls:108.76,delta:8.98,days:8.92,ppd:1.01,type:'normal'},
+      {date:'4/17/26',pumper:'Mike T.',ft:4,in:11,frac:'¾',bbls:99.78,delta:50.31,days:27.36,ppd:1.84,type:'normal'},
+      {date:'3/21/26',pumper:'Mike T.',ft:2,in:5,frac:'⅝',bbls:49.47,delta:null,days:57.58,ppd:0.00,type:'normal'},
+    ],
+    adjustments:[]
+  },
+  gainesb: {
+    name:'Gaines B', bbls:23.59, bblsPerIn:1.67, capacity:202,
+    ft:1, inches:2, frac:0.125, daysAgo:2, ppd:2.81, pumper:'Mike T.',
+    readings:[
+      {date:'3/17/26',pumper:'Mike T.',ft:1,in:2,frac:'⅛',bbls:23.59,delta:null,days:3.5,ppd:0.00,type:'oil_sold'},
+      {date:'3/14/26',pumper:'Mike T.',ft:8,in:11,frac:'¼',bbls:179.11,delta:28.39,days:17.80,ppd:1.59,type:'normal'},
+      {date:'2/24/26',pumper:'Mike T.',ft:7,in:6,frac:'¼',bbls:150.72,delta:10.02,days:3.64,ppd:2.76,type:'normal'},
+      {date:'2/20/26',pumper:'Mike T.',ft:7,in:0,frac:'¼',bbls:140.70,delta:18.58,days:7.06,ppd:2.63,type:'normal'},
+      {date:'2/13/26',pumper:'Mike T.',ft:6,in:1,frac:'⅛',bbls:122.12,delta:14.82,days:3.49,ppd:4.24,type:'normal'},
+    ],
+    adjustments:[
+      {date:'3/17/26',type:'Oil Sold',ticket:'#4471',purchaser:'Plains Marketing',bbls:155.52}
+    ]
+  },
+  normajean: {
+    name:'Norma Jean', bbls:162.83, bblsPerIn:1.67, capacity:202,
+    ft:8, inches:1, frac:0.5, daysAgo:3, ppd:0.65, pumper:'Mike T.',
+    readings:[
+      {date:'2/27/26',pumper:'Mike T.',ft:8,in:8,frac:'½',bbls:162.83,delta:15.03,days:51.52,ppd:0.29,type:'normal'},
+      {date:'1/6/26', pumper:'Mike T.',ft:7,in:4,frac:'½',bbls:147.80,delta:3.34,days:2.30,ppd:1.45,type:'normal'},
+      {date:'1/4/26', pumper:'Mike T.',ft:7,in:2,frac:'½',bbls:144.46,delta:68.26,days:181.93,ppd:0.38,type:'normal'},
+      {date:'7/6/25', pumper:'Mike T.',ft:3,in:9,frac:'⅝',bbls:76.19,delta:null,days:69.32,ppd:0.00,type:'oil_sold'},
+      {date:'4/28/25',pumper:'Mike T.',ft:9,in:1,frac:'¾',bbls:131.70,delta:12.90,days:26.95,ppd:0.48,type:'normal'},
+    ],
+    adjustments:[
+      {date:'7/6/25',type:'Oil Sold',ticket:'#4418',purchaser:'Plains Marketing',bbls:55.51}
+    ]
+  },
+  kellye:{name:'Kellye',bbls:58.50,bblsPerIn:1.75,capacity:210,ft:4,inches:0,frac:0,daysAgo:9,ppd:0.30,pumper:'Mike T.',readings:[
+    {date:'2/27/25',pumper:'Mike T.',ft:4,in:0,frac:'¾',bbls:58.50,delta:null,days:5.22,ppd:0.00,type:'normal'},
+  ],adjustments:[]},
+  freedomgaines:{name:'FreedomGaines',bbls:136.94,bblsPerIn:1.67,capacity:202,ft:8,inches:3,frac:0.75,daysAgo:11,ppd:0.82,pumper:'Mike T.',readings:[],adjustments:[]}
+};
+
+let currentRole = 'owner';
+let selectedLeaseId = null;
+let selectedReason = 'normal';
+
+// --- Navigation ---
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const tabs = document.querySelectorAll('.tab');
+  const names = ['dashboard','gauge','reports','settings'];
+  const idx = names.indexOf(id);
+  if(idx >= 0) tabs[idx]?.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function showLease(id) {
+  const l = LEASES[id];
+  if(!l) return;
+  document.getElementById('lease-detail-name').textContent = l.name;
+  // Stats
+  const statsEl = document.getElementById('lease-stats');
+  statsEl.innerHTML = `
+    <div class="stat-box"><div class="stat-label">BBLs On Hand</div><div class="stat-value accent">${l.bbls}</div><div class="stat-sub">Tank: ${Math.round(l.bbls/l.capacity*100)}% full</div></div>
+    <div class="stat-box"><div class="stat-label">Tank Level</div><div class="stat-value">${l.ft}′ ${l.inches}″</div><div class="stat-sub">+ ${fractDisplay(l.frac)} inch</div></div>
+    <div class="stat-box"><div class="stat-label">BBL / Day Avg</div><div class="stat-value">${l.ppd}</div><div class="stat-sub">7-day rolling</div></div>
+    <div class="stat-box"><div class="stat-label">Last Gauged</div><div class="stat-value" style="font-size:16px;color:${l.daysAgo>7?'var(--red)':'var(--text)'}">${l.daysAgo}d ago</div><div class="stat-sub">${l.pumper}</div></div>
+  `;
+  // Table
+  const tbl = document.getElementById('lease-table');
+  tbl.innerHTML = `<thead><tr><th>Date</th><th>Pumper</th><th>Ft</th><th>In</th><th>Frac</th><th>BBLs</th><th>Δ BBLs</th><th>Days</th><th>BBL/Day</th><th>Type</th></tr></thead><tbody>` +
+    l.readings.map(r => {
+      const isAdj = r.type !== 'normal';
+      const delta = r.delta === null ? '<span style="color:var(--text3)">—</span>' : `<span class="${r.delta<0?'neg':'pos'}">${r.delta>0?'+':''}${r.delta}</span>`;
+      const ppd = r.ppd === undefined || r.ppd === null ? '—' : r.ppd.toFixed(2);
+      return `<tr class="${isAdj?'adjust':''}">
+        <td class="primary">${r.date}</td><td>${r.pumper}</td>
+        <td class="mono">${r.ft}</td><td class="mono">${r.in}</td><td class="mono">${r.frac}</td>
+        <td class="mono primary">${r.bbls}</td><td class="mono">${delta}</td>
+        <td class="mono">${r.days}</td><td class="mono">${ppd}</td>
+        <td>${isAdj?`<span class="badge badge-blue">${typeLabel(r.type)}</span>`:`<span class="badge badge-green">Normal</span>`}</td>
+      </tr>`;
+    }).join('') + '</tbody>';
+  // Mini chart
+  const chart = document.getElementById('lease-chart');
+  chart.innerHTML = l.readings.map(r => {
+    const h = r.type==='normal' ? Math.max(8, Math.min(50, (r.ppd||0)*14)) : 14;
+    return `<div class="mini-bar ${r.type!=='normal'?'adj':''}" style="height:${h}px;" title="${r.type}: ${r.ppd||0} BBL/day"></div>`;
+  }).join('');
+  // Adjustments
+  const adjEl = document.getElementById('lease-adjustments');
+  if(l.adjustments.length === 0) {
+    adjEl.innerHTML = '<div style="color:var(--text3);font-size:13px;">No adjustments recorded</div>';
+  } else {
+    adjEl.innerHTML = l.adjustments.map(a => `
+      <div style="border:1px solid var(--border2);border-radius:var(--radius);padding:10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span class="badge badge-blue">${a.type}</span>
+          <span style="font-size:12px;color:var(--text3);">${a.date}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);">Ticket: ${a.ticket} · ${a.purchaser}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--accent);margin-top:4px;">${a.bbls} BBLs sold</div>
+      </div>
+    `).join('');
+  }
+  showPage('lease');
+}
+
+function fractDisplay(f) {
+  const m = {0:'0',0.125:'⅛',0.25:'¼',0.375:'⅜',0.5:'½',0.625:'⅝',0.75:'¾',0.875:'⅞'};
+  return m[f]||f;
+}
+function typeLabel(t) {
+  return {oil_sold:'Oil Sold',transferred:'Transferred',bottom_pulled:'Bottom Pulled',correction:'Correction',other:'Other'}[t]||t;
+}
+
+// --- Gauge Form ---
+function selectLease(id, cardEl) {
+  selectedLeaseId = id;
+  const l = LEASES[id];
+
+  // Collapse list → show single selected card
+  document.getElementById('lease-list').style.display = 'none';
+  const sel = document.getElementById('lease-selected-card');
+  sel.style.display = 'block';
+  document.getElementById('selected-lease-name').textContent = l.name;
+  document.getElementById('selected-lease-meta').textContent = cardEl.querySelector('.lease-select-meta').textContent;
+  document.getElementById('selected-lease-bbls').textContent = l.bbls;
+
+  // Show previous reading
+  document.getElementById('prev-panel').style.display='block';
+  document.getElementById('prev-lease-name').textContent = l.name;
+  const lastR = l.readings[0];
+  if(lastR) {
+    document.getElementById('prev-date').textContent = lastR.date;
+    document.getElementById('prev-pumper').textContent = lastR.pumper;
+    document.getElementById('prev-type').textContent = typeLabel(lastR.type)||'Normal';
+    document.getElementById('prev-level').textContent = `${lastR.ft} ft ${lastR.in} in`;
+    document.getElementById('prev-bbls').textContent = lastR.bbls + ' BBLs';
+    document.getElementById('prev-ppd').textContent = lastR.ppd?.toFixed(2) + ' BBL/day';
+  }
+
+  // Set default reading time to now
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('reading-date').value = now.toISOString().slice(0,16);
+
+  document.getElementById('step-entry').style.display='block';
+  document.getElementById('step-entry').scrollIntoView({behavior:'smooth',block:'start'});
+  updateCalc();
+}
+
+function changeLease() {
+  // Show the full list again, hide selected card and form
+  selectedLeaseId = null;
+  document.getElementById('lease-list').style.display = 'grid';
+  document.getElementById('lease-selected-card').style.display = 'none';
+  document.getElementById('prev-panel').style.display = 'none';
+  document.getElementById('step-entry').style.display = 'none';
+  document.getElementById('calc-panel').style.display = 'none';
+  document.getElementById('negative-warn').style.display = 'none';
+  document.getElementById('ticket-panel').style.display = 'none';
+  document.getElementById('inp-feet').value='';
+  document.getElementById('inp-inches').value='';
+  document.getElementById('inp-fraction').value='0';
+  document.getElementById('inp-comments').value='';
+  document.querySelectorAll('.reason-btn').forEach(b=>b.classList.remove('selected','oil'));
+  document.querySelector('.reason-btn[data-type="normal"]').classList.add('selected');
+  selectedReason='normal';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function selectReason(type, el) {
+  selectedReason = type;
+  document.querySelectorAll('.reason-btn').forEach(b=>b.classList.remove('selected','oil'));
+  el.classList.add('selected');
+  if(type==='oil_sold') el.classList.add('oil');
+  document.getElementById('ticket-panel').style.display = type==='oil_sold' ? 'block' : 'none';
+  updateCalc();
+}
+
+function updateCalc() {
+  if(!selectedLeaseId) return;
+  const l = LEASES[selectedLeaseId];
+  const ft = parseFloat(document.getElementById('inp-feet').value)||0;
+  const inches = parseFloat(document.getElementById('inp-inches').value)||0;
+  const frac = parseFloat(document.getElementById('inp-fraction').value)||0;
+  if(ft===0 && inches===0 && frac===0) { document.getElementById('calc-panel').style.display='none'; return; }
+
+  const totalIn = ft*12+inches+frac;
+  const bbls = (totalIn*l.bblsPerIn).toFixed(2);
+
+  document.getElementById('calc-panel').style.display='block';
+  document.getElementById('calc-level').textContent = `${ft} ft ${inches} in ${fractDisplay(frac)}`;
+  document.getElementById('calc-bbls').textContent = `${bbls} BBLs`;
+
+  const isNormal = selectedReason==='normal';
+  document.getElementById('calc-delta-row').style.display = isNormal ? '' : 'none';
+  document.getElementById('calc-days-row').style.display = isNormal ? '' : 'none';
+  document.getElementById('calc-ppd-row').style.display = isNormal ? '' : 'none';
+
+  if(isNormal && l.readings.length > 0) {
+    const lastNormal = l.readings.find(r=>r.type==='normal');
+    if(lastNormal) {
+      const delta = (parseFloat(bbls) - lastNormal.bbls).toFixed(2);
+      const negWarn = document.getElementById('negative-warn');
+      negWarn.style.display = parseFloat(delta) < 0 ? 'flex' : 'none';
+      document.getElementById('calc-delta').textContent = `${parseFloat(delta)>=0?'+':''}${delta} BBLs`;
+      document.getElementById('calc-delta').className = `val ${parseFloat(delta)<0?'neg':'pos'}`;
+      // Approximate days
+      const days = l.daysAgo || 7;
+      const ppd = Math.max(0, parseFloat(delta)/days).toFixed(2);
+      document.getElementById('calc-days').textContent = `~${days} days`;
+      document.getElementById('calc-ppd').textContent = `${ppd} BBL/day`;
+    }
+  }
+}
+
+function submitGauge() {
+  if(!selectedLeaseId) { alert('Please select a lease first.'); return; }
+  const ft = document.getElementById('inp-feet').value;
+  const inches = document.getElementById('inp-inches').value;
+  if(ft===''||inches==='') { alert('Please enter feet and inches.'); return; }
+
+  showToast('✓ Gauge submitted for ' + LEASES[selectedLeaseId].name);
+
+  // Full reset
+  changeLease();
+  setTimeout(()=>showPage('dashboard'),1200);
+}
+
+// --- CSV Import ---
+let parsedRows = [];
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('import-dropzone').style.borderColor='var(--border2)';
+  const file = e.dataTransfer.files[0];
+  if(file && file.name.endsWith('.csv')) processCSV(file);
+}
+function handleFileSelect(input) {
+  if(input.files[0]) processCSV(input.files[0]);
+}
+
+function processCSV(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+    parsedRows = lines.slice(1).filter(l=>l.trim()).map(line => {
+      const cols = line.split(',').map(c=>c.trim().replace(/^"|"$/g,''));
+      const obj = {};
+      headers.forEach((h,i)=>obj[h]=cols[i]||'');
+      return obj;
+    });
+
+    // Auto-detect column mapping from common GaugeLog headers
+    const colMap = {
+      'Timestamp': findCol(headers,['Timestamp','Date','datetime','Date/Time']),
+      'Well': findCol(headers,['What Well?','Well','Lease','Well Name']),
+      'Feet': findCol(headers,['Feet','Ft','feet']),
+      'Inches': findCol(headers,['Inch','Inches','In','inches']),
+      'BBL Total': findCol(headers,['BBL Total','BBLs','Barrels','bbl_total']),
+      'Comments': findCol(headers,['Comments','Notes','comment']),
+    };
+
+    // Render mapping grid
+    const grid = document.getElementById('mapping-grid');
+    grid.innerHTML = Object.entries(colMap).map(([field,col])=>`
+      <div style="color:var(--text3);">${field}</div>
+      <div style="color:${col?'var(--green)':'var(--red)'};">${col||'Not found ⚠'}</div>
+    `).join('');
+
+    // Preview table
+    const preview = parsedRows.slice(0,4);
+    const previewEl = document.getElementById('import-preview');
+    previewEl.innerHTML = `
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;">Preview — first ${preview.length} rows</div>
+      <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);">
+        <table class="tbl" style="font-size:11px;">
+          <thead><tr>${Object.keys(colMap).map(k=>`<th>${k}</th>`).join('')}</tr></thead>
+          <tbody>${preview.map(r=>`<tr>${Object.values(colMap).map(col=>`<td class="mono">${col?r[col]||'—':'—'}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+      </div>`;
+
+    // Warnings
+    const warnings = [];
+    if(!colMap['Well']) warnings.push('Well/Lease column not detected — you'll need to map manually');
+    if(!colMap['Feet']) warnings.push('Feet column not found');
+    const dupes = parsedRows.length - new Set(parsedRows.map(r=>r[colMap['Timestamp']]+'|'+r[colMap['Well']])).size;
+    if(dupes > 0) warnings.push(`${dupes} potential duplicate timestamps detected — review before importing`);
+
+    const warnEl = document.getElementById('import-warnings');
+    warnEl.innerHTML = warnings.length ? warnings.map(w=>`
+      <div class="alert-strip" style="margin-bottom:6px;font-size:12px;">⚠ ${w}</div>`).join('') : `
+      <div style="background:var(--green-bg);border:1px solid rgba(63,182,138,0.3);border-radius:var(--radius);padding:8px 12px;font-size:12px;color:var(--green);">
+        ✓ ${parsedRows.length} rows ready to import — no issues detected
+      </div>`;
+
+    document.getElementById('import-count').textContent = parsedRows.length;
+    document.getElementById('import-dropzone').style.display='none';
+    document.getElementById('import-mapping').style.display='block';
+  };
+  reader.readAsText(file);
+}
+
+function findCol(headers, candidates) {
+  for(const c of candidates) {
+    const found = headers.find(h=>h.toLowerCase()===c.toLowerCase());
+    if(found) return found;
+  }
+  return null;
+}
+
+function confirmImport() {
+  const count = parsedRows.length;
+  document.getElementById('import-mapping').style.display='none';
+  document.getElementById('import-success').style.display='block';
+  document.getElementById('import-success-msg').textContent = `${count} readings imported successfully`;
+  document.getElementById('import-success-sub').textContent = 'Production calculations will be recalculated. Check each lease's history to verify the data.';
+  parsedRows = [];
+}
+
+function resetImport() {
+  parsedRows = [];
+  document.getElementById('import-dropzone').style.display='block';
+  document.getElementById('import-mapping').style.display='none';
+  document.getElementById('import-success').style.display='none';
+  document.getElementById('csv-file-input').value='';
+}
+
+function downloadTemplate() {
+  const csv = 'Timestamp,What Well?,Feet,Inch,BBL Total,Comments\n' +
+    '5/11/2026 20:10:52,Schuster,6,1,122.75,Normal gauge\n' +
+    '5/3/2026 15:52:22,Schuster,5,8,115.02,\n' +
+    '3/17/2026 20:07:03,Gaines B,1,2,23.59,Oil sold — Plains ticket #4471\n';
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'OilGauge_import_template.csv';
+  a.click();
+  showToast('Template CSV downloaded');
+}
+
+// --- Role Toggle ---
+function toggleRole() {
+  if(currentRole==='owner') {
+    currentRole='pumper';
+    document.getElementById('nav-user-name').textContent='Mike Thurston (Pumper)';
+    document.getElementById('role-toggle').textContent='Switch to Owner';
+    document.getElementById('gauge-pumper-name').textContent='Mike Thurston';
+    document.querySelectorAll('.owner-only').forEach(el=>el.style.display='none');
+    showPage('gauge');
+  } else {
+    currentRole='owner';
+    document.getElementById('nav-user-name').textContent='TKL Oil Properties';
+    document.getElementById('role-toggle').textContent='Switch to Pumper';
+    document.querySelectorAll('.owner-only').forEach(el=>el.style.display='');
+    showPage('dashboard');
+  }
+}
+
+// --- Toast ---
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
