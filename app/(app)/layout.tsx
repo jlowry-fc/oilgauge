@@ -9,13 +9,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from('users')
-    .select('full_name')
+    .select('full_name, role')
     .eq('id', user.id)
     .single()
 
   return (
     <div style={{ minHeight:'100vh' }}>
-      <Nav userName={profile?.full_name ?? user.email ?? ''} />
+      <Nav
+        userName={profile?.full_name ?? user.email ?? ''}
+        isSuperAdmin={profile?.role === 'super_admin'}
+      />
       <main style={{ padding:'20px', maxWidth:'1100px', margin:'0 auto' }}>
         {children}
       </main>
