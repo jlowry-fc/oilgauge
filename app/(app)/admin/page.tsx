@@ -13,17 +13,14 @@ export default async function AdminPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.role !== 'super_admin') {
-    redirect('/dashboard')
-  }
+  if (!profile || profile.role !== 'super_admin') redirect('/dashboard')
 
   const { data: operatorsRaw } = await supabase
     .from('users')
     .select('id, full_name, role, is_active, created_at, tenant_id, tenants(name)')
-    .eq('role', 'owner')
+    .in('role', ['owner', 'pumper'])
     .order('created_at', { ascending: false })
 
-  // Normalize tenants from array (Supabase join) to single object
   const operators = (operatorsRaw ?? []).map((op: any) => ({
     ...op,
     tenants: Array.isArray(op.tenants) ? (op.tenants[0] ?? null) : op.tenants,
@@ -32,7 +29,7 @@ export default async function AdminPage() {
   const { data: tenants } = await supabase
     .from('tenants')
     .select(`id, name, created_at, leases(id), gauge_readings(id)`)
-    .order('created_at', { ascending: false })
+    .order('name')
 
   return (
     <AdminClient
